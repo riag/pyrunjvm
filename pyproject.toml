@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "pyrunjvm"
+version = "0.1.0"
+description = ""
+authors = ["riag <riag@163.com>"]
+license = "Apache-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+tomlkit = "^0.5.3"
+pybee = "^0.3.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

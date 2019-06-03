@@ -5,6 +5,11 @@ description = ""
 authors = ["riag <riag@163.com>"]
 license = "Apache-2.0"
 
+readme= 'README.md'
+
+[tool.poetry.scripts]
+pyrunjvm = 'pyrunjvm:pyrunjvm.main'
+
 [tool.poetry.dependencies]
 python = "^3.6"
 tomlkit = "^0.5.3"

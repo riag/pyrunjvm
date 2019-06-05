@@ -1,9 +1,14 @@
 
 from string import Template
 import os
+import sys
 import logging
+import subprocess
 
 import pybee
+
+import tomlkit
+from tomlkit.toml_file import TOMLFile
 
 from .util import is_str
 
@@ -74,28 +79,36 @@ class Context(object):
 
         return None
 
+    def run(self, **kwargs):
+        java_bin = self.get_env('JAVA_BIN')
+        if java_bin is None:
+            java_home = self.get_env('JAVA_HOME')
+            if java_home:
+                java_bin = os.path.join(java_home, 'bin', 'java')
 
-def create_context(config_file, env):
+        if java_bin is None:
+            java_bin = 'java'
 
-    platform = sys.platform
-    logging.info('platform : %s', platform)
+        jvm_cmd_list = [java_bin,]
+        jvm_cmd_list.extend(self.jvm_arg_list)
+
+        cmd = ' '.join(jvm_cmd_list)
+        logging.debug('execute cmd: %s', cmd)
+        if kwargs.get('shell', None) is None:
+            kwargs['shell'] = True
+        subprocess.check_call(cmd, **kwargs)
+
+
+def create_context(platform, work_dir, config_file, env):
 
     if not os.path.isabs(config_file):
         config_file = os.path.abspath(config_file)
 
-    work_dir = os.path.dirname(config_file)
-
-    env_file = os.path.join(CURRENT_WORK_DIR, '.env.toml')
-
-    config = load_tomlfile(config_file)
+    toml = TOMLFile(config_file)
+    config = toml.read()
     logging.debug('config file content:')
     logging.debug(config)
 
-    env = None
-    if os.path.isfile(env_file):
-        env = load_env_file(env_file, platform)
-        logging.debug(env)
-
     return Context(
-        platform, CURRENT_WORK_DIR, 
+        platform, work_dir, 
         config, env)

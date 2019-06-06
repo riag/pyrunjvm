@@ -1,6 +1,7 @@
 
 import os
 import pkg_resources
+import logging
 
 import pybee
 from .util import random_port
@@ -57,8 +58,10 @@ class TomcatApplication(AbastApplication):
 
         self.src_tomcat_home_dir = self.context.get_env('TOMCAT_HOME')
         if not self.src_tomcat_home_dir:
-            pass
+            logging.error('please define env variable TOMCAT_HOME')
+            return False
 
+        return True
 
     def pre_handle(self):
         pybee.path.mkdir(self.tomcat_context_dir, True)

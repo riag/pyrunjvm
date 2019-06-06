@@ -1,4 +1,5 @@
 
+import os
 import logging
 
 import tomlkit
@@ -6,6 +7,8 @@ from tomlkit.toml_file import TOMLFile
 
 
 def load_env_file(f, platform):
+    if not os.path.isfile(f):
+        return None
     toml = TOMLFile(f)
     content = toml.read()
     logging.debug('env config file content:')

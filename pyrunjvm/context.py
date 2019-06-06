@@ -100,6 +100,9 @@ class Context(object):
 
 
 def create_context(platform, work_dir, config_file, env):
+    if not os.path.isfile(config_file):
+        logging.error("config file %s is not exist", config_file)
+        return None
 
     if not os.path.isabs(config_file):
         config_file = os.path.abspath(config_file)

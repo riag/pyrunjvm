@@ -52,9 +52,13 @@ def main(config_file):
     context = create_context(
         platform, CURRENT_WORK_DIR, config_file, env
         )
+    if context is None:
+        return
+
     app = create_application(context)
 
-    app.prepare_config()
+    if not app.prepare_config():
+        return
 
     build(context)
 

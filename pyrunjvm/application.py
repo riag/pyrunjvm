@@ -98,7 +98,7 @@ class TomcatApplication(AbastApplication):
             'context_path': context_path,
             'war_path': exploded_war_path
         }
-        s = TOMCAT_CONTEXT_XML_TPL.format(**m)
+        s = self.TOMCAT_CONTEXT_XML_TPL.format(**m)
         out_file = os.path.join(self.tomcat_context_dir, '%s.xml' % context_path)
         pybee.path.write_file_with_encoding(out_file, s)
 

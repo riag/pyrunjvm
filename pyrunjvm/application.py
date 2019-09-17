@@ -112,12 +112,13 @@ class TomcatApplication(AbastApplication):
             'AJP_PORT': self.ajp_port,
         }
         pybee.sed.render_by_jinja_template(
-            tpl, 
+            tpl,
             os.path.join(self.conf_dir, 'server.xml'),
             'utf-8', m
         )
 
         context = self.context
+        context.jvm_arg_list.append('-D"java.awt.headless"=true')
         context.jvm_arg_list.append(
             "-D\"java.util.logging.config.file\"=\"%s\"" % os.path.join(self.conf_dir, 'logging.properties')
             )

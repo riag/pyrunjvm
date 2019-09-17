@@ -68,6 +68,7 @@
     -->
     <Connector port="{{PORT}}" protocol="HTTP/1.1"
                connectionTimeout="20000"
+               URIEncoding="UTF-8"
                redirectPort="{{REDIRECT_PORT}}" />
     <!-- A "Connector" using the shared thread pool-->
     <!--

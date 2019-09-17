@@ -45,6 +45,7 @@ def main(config_file):
     platform = sys.platform
 
     logging.info('platform : %s', platform)
+    logging.info('work dir : %s', CURRENT_WORK_DIR)
 
     env_file = os.path.join(CURRENT_WORK_DIR, '.env.toml')
     env = load_env_file(env_file, platform)

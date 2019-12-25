@@ -14,9 +14,12 @@ from .util import is_str
 
 class Context(object):
     def __init__(self, platform, work_dir, config, env=None):
-        self. platform = platform
+        self.platform = platform
         self.work_dir = work_dir 
         self.dest_dir = os.path.join(work_dir, '.pyrunjvm')
+
+        self.no_config = False
+        self.no_run = False
 
         pybee.path.mkdir(self.dest_dir, True)
 
@@ -96,7 +99,9 @@ class Context(object):
         logging.debug('execute cmd: %s', cmd)
         if kwargs.get('shell', None) is None:
             kwargs['shell'] = True
-        subprocess.check_call(cmd, **kwargs)
+
+        if not self.no_run:
+            subprocess.check_call(cmd, **kwargs)
 
 
 def create_context(platform, work_dir, config_file, env):

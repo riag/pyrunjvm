@@ -165,6 +165,17 @@
                prefix="localhost_access_log" suffix=".txt"
                pattern="%h %l %u %t &quot;%r&quot; %s %b" />
 
+     {% if Proxy.enable %}
+        <Valve className="org.apache.catalina.valves.RemoteIpValve"
+               internalProxies="{{ Proxy.ip }}"
+               remoteIpHeader="x-forwarded-for"
+               proxiesHeader="x-forwarded-by"
+               protocolHeader="x-forwarded-proto"
+               httpsServerPort="{{ Proxy.https_port }}"
+               httpServerPort="{{ Proxy.http_port }}"
+       />
+     {% endif %}
+
       </Host>
     </Engine>
   </Service>

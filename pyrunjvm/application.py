@@ -22,16 +22,26 @@ class AbastApplication(object):
     def post_handle(self):
         pass
 
+class TomcatProxy(object):
+    def __init__(self, context, proxy_config):
+        self.enable = proxy_config.get('enable')
+        self.ip = context.get_env('TOMCAT_PROXY_IP', '127.0.0.1')
+        self.http_port = context.get_env('TOMCAT_PROXY_HTTP_PORT', '80')
+        self.https_port = context.get_env('TOMCAT_PROXY_HTTPS_PORT', '443')
+
+        if self.ip:
+            self.ip = self.ip.replace('.', '\\.')
 
 class TomcatApplication(AbastApplication):
 
     TOMCAT_CONTEXT_XML_TPL = '''<?xml version="1.0" encoding="UTF-8"?>
-    <Context path="/{context_path}" docBase="{war_path}" />
+    <Context path="{context_path}" docBase="{war_path}" reloadable="true"/>
     '''
 
     def __init__(self, context):
         self.context = context
         self.tomcat_config = None
+        self.tomcat_proxy = None
         self.port = None
         self.shutdowm_port = None
         self.ajp_port = None
@@ -51,6 +61,9 @@ class TomcatApplication(AbastApplication):
 
     def prepare_config(self):
 
+        self.tomcat_config = self.context.config.get('tomcat')
+        self.tomcat_proxy = TomcatProxy(self.context, self.tomcat_config.get('proxy'))
+
         self.port = self.context.get_env('TOMCAT_PORT', 8080)
         self.shutdowm_port = self.context.get_env('TOMCAT_SHUTDOWN_PORT', -1)
         self.ajp_port = self.context.get_env('TOMAT_AJP_PORT', -1)
@@ -64,10 +77,15 @@ class TomcatApplication(AbastApplication):
         return True
 
     def pre_handle(self):
+        if self.context.no_config:
+            return
+
         pybee.path.mkdir(self.tomcat_context_dir, True)
         pybee.path.mkdir(self.temp_dir)
         pybee.path.mkdir(self.work_dir)
         pybee.path.mkdir(self.logs_dir)
+
+        pybee.path.rmtree(self.conf_dir)
 
         pybee.path.copytree(
             os.path.join(self.src_tomcat_home_dir, 'conf'),
@@ -89,35 +107,47 @@ class TomcatApplication(AbastApplication):
 
 
     def handle_project(self, project_config):
+        if self.context.no_config:
+            return
+
+        project_path = project_config.get('path')
         context_path = project_config.get('context_path')
         exploded_war_path = project_config.get('exploded_war_path')
 
+        context_path = self.context.resolve_config_value(context_path)
         exploded_war_path = self.context.resolve_config_value(exploded_war_path)
+
+        if not context_path.startswith('/'):
+            context_path = '/%s' % context_path
 
         m = {
             'context_path': context_path,
             'war_path': exploded_war_path
         }
         s = self.TOMCAT_CONTEXT_XML_TPL.format(**m)
-        out_file = os.path.join(self.tomcat_context_dir, '%s.xml' % context_path)
+        p = context_path[1:]
+        p = p.replace('/', '#')
+        out_file = os.path.join(self.tomcat_context_dir, '%s.xml' % p)
         pybee.path.write_file_with_encoding(out_file, s)
 
 
     def post_handle(self):
-        tpl = pkg_resources.resource_filename(__name__, 'config/tomcat/server.xml')
-        m = {
-            'PORT': self.port,
-            'SHUTDOWN_PORT': self.shutdowm_port,
-            'REDIRECT_PORT': self.redirect_port,
-            'AJP_PORT': self.ajp_port,
-        }
-        pybee.sed.render_by_jinja_template(
-            tpl,
-            os.path.join(self.conf_dir, 'server.xml'),
-            'utf-8', m
-        )
-
         context = self.context
+        if not context.no_config:
+            tpl = pkg_resources.resource_filename(__name__, 'config/tomcat/server.xml')
+            m = {
+                'PORT': self.port,
+                'SHUTDOWN_PORT': self.shutdowm_port,
+                'REDIRECT_PORT': self.redirect_port,
+                'AJP_PORT': self.ajp_port,
+                'Proxy': self.tomcat_proxy
+            }
+            pybee.sed.render_by_jinja_template(
+                tpl,
+                os.path.join(self.conf_dir, 'server.xml'),
+                'utf-8', m
+            )
+
         context.jvm_arg_list.append('-D"java.awt.headless"=true')
         context.jvm_arg_list.append(
             "-D\"java.util.logging.config.file\"=\"%s\"" % os.path.join(self.conf_dir, 'logging.properties')

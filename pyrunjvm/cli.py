@@ -7,6 +7,7 @@ import subprocess
 from .env import load_env_file
 from .context import create_context
 from .application import create_application
+import pyrunjvm
 
 CURRENT_WORK_DIR = os.path.abspath(os.getcwd())
 DEFAULT_CONFIG_FILE = os.path.join(CURRENT_WORK_DIR, '.pyrunjvm.toml')
@@ -37,7 +38,11 @@ def handle_projects(context, app):
 
 @click.command()
 @click.option('-c', '--config', 'config_file', default=DEFAULT_CONFIG_FILE)
-def main(config_file):
+@click.option('--no-config', is_flag=True)
+@click.option('--no-build', is_flag=True)
+@click.option('--no-run', is_flag=True)
+@click.option('--version', 'print_version', is_flag=True)
+def main(config_file, no_config, no_build, no_run, print_version):
 
     rootLogger = logging.getLogger()
     rootLogger.setLevel(logging.DEBUG)
@@ -46,6 +51,13 @@ def main(config_file):
 
     logging.info('platform : %s', platform)
     logging.info('work dir : %s', CURRENT_WORK_DIR)
+    logging.info(f'no config: {no_config}')
+    logging.info(f'no build: {no_build}')
+    logging.info(f'no run: {no_run}')
+
+    if print_version:
+        logging.info('version: %s', pyrunjvm.__version__)
+        return
 
     env_file = os.path.join(CURRENT_WORK_DIR, '.env.toml')
     env = load_env_file(env_file, platform)
@@ -56,12 +68,16 @@ def main(config_file):
     if context is None:
         return
 
+    context.no_config = no_config
+    context.no_run = no_run
+
     app = create_application(context)
 
     if not app.prepare_config():
         return
 
-    build(context)
+    if not no_build:
+        build(context)
 
     handle_projects(context, app)
 

@@ -22,6 +22,9 @@ class AbastApplication(object):
     def post_handle(self):
         pass
 
+    def run(self, **kwargs):
+        pass
+
 class TomcatProxy(object):
     def __init__(self, context, proxy_config):
         self.enable = proxy_config.get('enable')
@@ -59,6 +62,15 @@ class TomcatApplication(AbastApplication):
 
         self.src_tomcat_home_dir = None
 
+        self.debug_port = self.context.get_env('JVM_DEBUG_PORT', 50899)
+        self.jvm_arg_list = []
+        if context.jvm_arg_list:
+            self.jvm_arg_list.extend(context.jvm_arg_list)
+        self.jvm_arg_list.append('-Xdebug') 
+        self.jvm_arg_list.append(
+            '-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=127.0.0.1:%d' % self.debug_port
+        )
+
     def prepare_config(self):
 
         self.tomcat_config = self.context.config.get('tomcat')
@@ -92,7 +104,7 @@ class TomcatApplication(AbastApplication):
             self.conf_dir
         )
 
-        use_port_list = [self.context.debug_port , self.port,]
+        use_port_list = [self.debug_port , self.port,]
         if self.shutdowm_port < 1:
             self.shutdowm_port = random_port(use_port_list)
             use_port_list.append(self.shutdowm_port)
@@ -148,20 +160,20 @@ class TomcatApplication(AbastApplication):
                 'utf-8', m
             )
 
-        context.jvm_arg_list.append('-D"java.awt.headless"=true')
-        context.jvm_arg_list.append(
+        self.jvm_arg_list.append('-D"java.awt.headless"=true')
+        self.jvm_arg_list.append(
             "-D\"java.util.logging.config.file\"=\"%s\"" % os.path.join(self.conf_dir, 'logging.properties')
             )
-        context.jvm_arg_list.append("-D\"java.util.logging.manager\"=org.apache.juli.ClassLoaderLogManager")
+        self.jvm_arg_list.append("-D\"java.util.logging.manager\"=org.apache.juli.ClassLoaderLogManager")
 
-        #context.jvm_arg_list.append("-D\"com.sun.management.jmxremote\"= ")
-        #context.jvm_arg_list.append("-D\"com.sun.management.jmxremote.port\"=%d" % tomact_jmx_port)
-        #context.jvm_arg_list.append("-D\"com.sun.management.jmxremote.ssl\"=false")
-        #context.jvm_arg_list.append("-D\"com.sun.management.jmxremote.authenticate\"=false")
+        #self.jvm_arg_list.append("-D\"com.sun.management.jmxremote\"= ")
+        #self.jvm_arg_list.append("-D\"com.sun.management.jmxremote.port\"=%d" % tomact_jmx_port)
+        #self.jvm_arg_list.append("-D\"com.sun.management.jmxremote.ssl\"=false")
+        #self.jvm_arg_list.append("-D\"com.sun.management.jmxremote.authenticate\"=false")
 
-        context.jvm_arg_list.append("-D\"java.rmi.server.hostname\"=127.0.0.1")
-        context.jvm_arg_list.append("-D\"jdk.tls.ephemeralDHKeySize\"=2048")
-        context.jvm_arg_list.append("-D\"java.protocol.handler.pkgs\"=\"org.apache.catalina.webresources\"")
+        self.jvm_arg_list.append("-D\"java.rmi.server.hostname\"=127.0.0.1")
+        self.jvm_arg_list.append("-D\"jdk.tls.ephemeralDHKeySize\"=2048")
+        self.jvm_arg_list.append("-D\"java.protocol.handler.pkgs\"=\"org.apache.catalina.webresources\"")
 
         class_path_list = []
         class_path_list.append(
@@ -170,14 +182,27 @@ class TomcatApplication(AbastApplication):
         class_path_list.append(
             os.path.join(self.src_tomcat_home_dir, "bin", "tomcat-juli.jar")
             )
-        context.jvm_arg_list.append('-classpath')
-        context.jvm_arg_list.append('"%s"' % os.pathsep.join(class_path_list))
+        self.jvm_arg_list.append('-classpath')
+        self.jvm_arg_list.append('"%s"' % os.pathsep.join(class_path_list))
 
-        context.jvm_arg_list.append("-D\"catalina.base\"=\"%s\"" % self.tomcat_dir)
-        context.jvm_arg_list.append("-D\"catalina.home\"=\"%s\"" % self.src_tomcat_home_dir)
-        context.jvm_arg_list.append("-D\"java.io.tmpdir\"=\"%s\"" % self.temp_dir)
-        context.jvm_arg_list.append("org.apache.catalina.startup.Bootstrap")
-        context.jvm_arg_list.append("start")
+        self.jvm_arg_list.append("-D\"catalina.base\"=\"%s\"" % self.tomcat_dir)
+        self.jvm_arg_list.append("-D\"catalina.home\"=\"%s\"" % self.src_tomcat_home_dir)
+        self.jvm_arg_list.append("-D\"java.io.tmpdir\"=\"%s\"" % self.temp_dir)
+        self.jvm_arg_list.append("org.apache.catalina.startup.Bootstrap")
+        self.jvm_arg_list.append("start")
+
+
+    def run(self, **kwargs):
+        jvm_cmd_list = [self.context.java_bin,]
+        jvm_cmd_list.extend(self.jvm_arg_list)
+
+        cmd = ' '.join(jvm_cmd_list)
+        logging.debug('execute cmd: %s', cmd)
+        if kwargs.get('shell', None) is None:
+            kwargs['shell'] = True
+
+        if not self.context.no_run:
+            subprocess.check_call(cmd, **kwargs)
 
 
 

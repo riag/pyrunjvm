@@ -12,6 +12,19 @@ from tomlkit.toml_file import TOMLFile
 
 from .util import is_str
 
+class Project(object):
+    def __init__(self, name, path, config):
+        self.name = name
+        self.path = path
+        self.config = config
+
+        self.jvm_arg_list = []
+
+        self.log_file = None
+        # Popen 对象
+        self.proc = None
+
+
 class Context(object):
     def __init__(self, platform, work_dir, config, env=None):
         self.platform = platform
@@ -20,6 +33,12 @@ class Context(object):
 
         self.no_config = False
         self.no_run = False
+
+        self.log_file = None
+        # Popen 对象
+        self.proc = None
+
+        self.project_list = []
 
         pybee.path.mkdir(self.dest_dir, True)
 
@@ -34,7 +53,6 @@ class Context(object):
         if env:
             self.environ.update(env)
 
-        
         self.environ['WORK_DIR'] = work_dir
 
         self.jvm_arg_list = []
@@ -43,12 +61,16 @@ class Context(object):
         if jvm_opts:
             self.jvm_arg_list.extend(jvm_opts)
 
-        self.debug_port = self.get_env('JVM_DEBUG_PORT', 50899)
+        java_bin = self.get_env('JAVA_BIN')
+        if java_bin is None:
+            java_home = self.get_env('JAVA_HOME')
+            if java_home:
+                java_bin = os.path.join(java_home, 'bin', 'java')
 
-        self.jvm_arg_list.append('-Xdebug') 
-        self.jvm_arg_list.append(
-            '-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=127.0.0.1:%d' % self.debug_port
-        )
+        if java_bin is None:
+            java_bin = 'java'
+
+        self.java_bin = java_bin
 
     def get_env(self, name, default=None):
         value = self.environ.get(name, None)
@@ -81,16 +103,17 @@ class Context(object):
             old_v = v
 
         return None
+    
+    def create_project(self, project_config):
+        path = project_config.get('path')
+        name = os.path.dirname(path)
+        name = project_config.get('name', name)
+        p = Project(name, path, project_config)
+        self.project_list.append(p)
+        return p
+
 
     def run(self, **kwargs):
-        java_bin = self.get_env('JAVA_BIN')
-        if java_bin is None:
-            java_home = self.get_env('JAVA_HOME')
-            if java_home:
-                java_bin = os.path.join(java_home, 'bin', 'java')
-
-        if java_bin is None:
-            java_bin = 'java'
 
         jvm_cmd_list = [java_bin,]
         jvm_cmd_list.extend(self.jvm_arg_list)

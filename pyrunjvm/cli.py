@@ -81,7 +81,7 @@ def main(config_file, no_config, no_build, no_run, print_version):
 
     handle_projects(context, app)
 
-    context.run()
+    app.run()
 
 if __name__ == '__main__':
     main()

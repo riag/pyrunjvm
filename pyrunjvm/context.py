@@ -113,20 +113,6 @@ class Context(object):
         return p
 
 
-    def run(self, **kwargs):
-
-        jvm_cmd_list = [java_bin,]
-        jvm_cmd_list.extend(self.jvm_arg_list)
-
-        cmd = ' '.join(jvm_cmd_list)
-        logging.debug('execute cmd: %s', cmd)
-        if kwargs.get('shell', None) is None:
-            kwargs['shell'] = True
-
-        if not self.no_run:
-            subprocess.check_call(cmd, **kwargs)
-
-
 def create_context(platform, work_dir, config_file, env):
     if not os.path.isfile(config_file):
         logging.error("config file %s is not exist", config_file)

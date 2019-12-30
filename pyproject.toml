@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyrunjvm"
-version = "0.1.1"
+version = "0.2.0"
 description = ""
 authors = ["riag <riag@163.com>"]
 license = "Apache-2.0"

@@ -6,6 +6,11 @@ import logging
 import pybee
 from .util import random_port
 
+class DebugPortInfo(object):
+    def __init__(self, name, port):
+        self.name = name
+        self.port = port
+
 class AbastApplication(object):
     def __init__(self, context):
         self.context = context
@@ -70,6 +75,8 @@ class TomcatApplication(AbastApplication):
         self.jvm_arg_list.append(
             '-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=127.0.0.1:%d' % self.debug_port
         )
+
+        self.context.debug_port_info_list.append(DebugPortInfo('debug tomcat', self.debug_port))
 
     def prepare_config(self):
 

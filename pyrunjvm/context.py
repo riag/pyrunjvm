@@ -11,6 +11,8 @@ import tomlkit
 from tomlkit.toml_file import TOMLFile
 
 from .util import is_str
+import jinja2
+import io
 
 class Project(object):
     def __init__(self, name, path, config):
@@ -71,6 +73,7 @@ class Context(object):
             java_bin = 'java'
 
         self.java_bin = java_bin
+        self.debug_port_info_list = []
 
     def get_env(self, name, default=None):
         value = self.environ.get(name, None)
@@ -111,6 +114,35 @@ class Context(object):
         p = Project(name, path, project_config)
         self.project_list.append(p)
         return p
+
+    def gen_vscode_launch_file(self):
+        '''
+        vscode launch file format:
+        https://code.visualstudio.com/Docs/editor/debugging#_compound-launch-configurations
+        '''
+        launch_tpl = '''{
+  "version": "0.2.0",
+  "configurations": [
+      {% for info in debug_port_info_list %}
+    {
+      "type": "java",
+      "request": "attach",
+      "name": "{{ info.name }}",
+      "port": {{ info.port }}
+    }
+    {% endfor %}
+  ]
+}
+        '''
+        p = os.path.join(self.dest_dir, 'launch.json')
+        t = jinja2.Template(launch_tpl) 
+        m = {
+            "debug_port_info_list": self.debug_port_info_list
+        }
+        s = t.render(m)
+        with io.open(p, 'w', encoding='UTF-8') as f:
+            f.write(s)
+
 
 
 def create_context(platform, work_dir, config_file, env):

@@ -36,10 +36,6 @@ class Context(object):
         self.no_config = False
         self.no_run = False
 
-        self.log_file = None
-        # Popen 对象
-        self.proc = None
-
         self.project_list = []
 
         pybee.path.mkdir(self.dest_dir, True)

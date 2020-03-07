@@ -32,6 +32,7 @@ class Context(object):
         self.platform = platform
         self.work_dir = work_dir 
         self.dest_dir = os.path.join(work_dir, '.pyrunjvm')
+        self.logs_dir = os.path.join(self.dest_dir, 'logs')
 
         self.no_config = False
         self.no_run = False
@@ -39,6 +40,7 @@ class Context(object):
         self.project_list = []
 
         pybee.path.mkdir(self.dest_dir, True)
+        pybee.path.mkdir(self.logs_dir, True)
 
         self.config = config
         self.environ = {}

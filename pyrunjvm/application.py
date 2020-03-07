@@ -209,7 +209,14 @@ class TomcatApplication(AbastApplication):
         if kwargs.get('shell', None) is None:
             kwargs['shell'] = True
 
-        if not self.context.no_run:
+        log_file = os.path.join(self.context.logs_dir, 'tomcat.log')
+
+        if self.context.no_run:
+            return
+
+        with open(log_file, 'w') as f:
+            kwargs['stdout'] = f
+            kwargs['stderr'] = f
             subprocess.check_call(cmd, **kwargs)
 
 class FlatJarConfig(object):
@@ -267,9 +274,7 @@ class FlatJarApplication(AbastApplication):
 
     async def run_flatjar(self, config:FlatJarConfig):
         p = os.path.join(self.logs_dir, config.log_file_name)
-        with open(p, 'wa') as log_file:
-            # 跳到文件最后
-            log_file.seek(0, 2)
+        with open(p, 'w') as log_file:
             jvm_args = []
             if self.context.jvm_arg_list:
                 jvm_args.extend(self.context.jvm_arg_list)

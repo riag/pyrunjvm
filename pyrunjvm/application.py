@@ -1,11 +1,11 @@
 
 import os
 import pkg_resources
-import logging
 
 import pybee
 from .util import random_port
 import asyncio
+import subprocess
 
 class DebugPortInfo(object):
     def __init__(self, name, port):
@@ -17,6 +17,9 @@ class AbastApplication(object):
         self.context = context
 
     def prepare_config(self):
+        pass
+
+    def build_project(self, project_config):
         pass
 
     def pre_handle(self):
@@ -91,7 +94,7 @@ class TomcatApplication(AbastApplication):
 
         self.src_tomcat_home_dir = self.context.get_env('TOMCAT_HOME')
         if not self.src_tomcat_home_dir:
-            logging.error('please define env variable TOMCAT_HOME')
+            print('please define env variable TOMCAT_HOME')
             return False
 
         return True
@@ -205,11 +208,14 @@ class TomcatApplication(AbastApplication):
         jvm_cmd_list.extend(self.jvm_arg_list)
 
         cmd = ' '.join(jvm_cmd_list)
-        logging.debug('execute cmd: %s', cmd)
         if kwargs.get('shell', None) is None:
             kwargs['shell'] = True
 
         log_file = os.path.join(self.context.logs_dir, 'tomcat.log')
+
+        print(f'execute cmd: {cmd}')
+        print('')
+        print('log file is %s' % log_file)
 
         if self.context.no_run:
             return
@@ -219,8 +225,12 @@ class TomcatApplication(AbastApplication):
             kwargs['stderr'] = f
             subprocess.check_call(cmd, **kwargs)
 
+        print('')
+        print('stop')
+
 class FlatJarConfig(object):
     def __init__(self):
+        self.name = ''
         self.project_path = ''
         self.jar_path = ''
         self.jvm_arg_list = []
@@ -230,13 +240,22 @@ class FlatJarConfig(object):
 
 class FlatJarApplication(AbastApplication):
     def __init__(self, context):
-        super().__init__(self, context)
+        super().__init__(context)
 
         self.logs_dir = os.path.join(self.context.dest_dir, 'logs')
         self.flatjar_config_list = []
 
     def prepare_config(self):
-        pass
+        return True
+
+    def build_project(self, project_config):
+        clear_cmds = project_config.get('clear_cmds', None)
+        if clear_cmds:
+            self.context.execute_cmds(clear_cmds)
+
+        build_cmds = project_config.get('build_cmds')
+        if build_cmds:
+            self.context.execute_cmds(build_cmds)
 
     def pre_handle(self):
         if self.context.no_config:
@@ -252,9 +271,13 @@ class FlatJarApplication(AbastApplication):
         jar_path = self.context.resolve_config_value(jar_path)
         jvm_arg_list = project_config.get('jvm_opts')
         debug_port = project_config.get('debug_port')
-        debug_port = self.cnotext.resolve_config_value(debug_port)
+        debug_port = self.context.resolve_config_value(debug_port)
+
+        if debug_port and type(debug_port) is str:
+            debug_port = int(debug_port)
 
         c = FlatJarConfig()
+        c.name = name
         c.project_path = project_path
         c.jar_path = jar_path
         c.jvm_arg_list = jvm_arg_list
@@ -288,29 +311,35 @@ class FlatJarApplication(AbastApplication):
             cmd_list.append('-jar')
             cmd_list.append(config.jar_path)
 
-            cmd = ' '.join(jvm_cmd_list)
-            logging.debug('execute cmd: %s', cmd)
+            cmd = ' '.join(cmd_list)
+            print(f'execute cmd: {cmd}')
+            print('')
+            print(f'log file is {p}')
 
+            cwd = os.path.join(self.context.work_dir, config.project_path)
             proc = await asyncio.create_subprocess_shell(
                 cmd, 
                 stdout=log_file,
-                stderr=log_file
+                stderr=log_file,
+                cwd = cwd
             )
             await proc.wait()
+            print(f"{config.name} is stop")
 
 
     def run(self, **kwargs):
+        if self.context.no_run:
+            return
+
         ct_list = []
+        loop = asyncio.get_event_loop()
         for config in self.flatjar_config_list:
             ct = self.run_flatjar(config)
+            print('')
             ct_list.append(ct)
 
-        async def run_main():
-            await asyncio.gather(ct_list)
-
-        if not self.context.no_run:
-            asyncio.run(run_main())
-
+        loop.run_until_complete(asyncio.gather(*ct_list))
+        loop.close()
 
 application_map = {
     'tomcat': TomcatApplication,

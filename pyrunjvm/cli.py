@@ -1,6 +1,5 @@
 import os
 import sys
-import logging
 import click
 import subprocess
 
@@ -12,20 +11,21 @@ import pyrunjvm
 CURRENT_WORK_DIR = os.path.abspath(os.getcwd())
 DEFAULT_CONFIG_FILE = os.path.join(CURRENT_WORK_DIR, '.pyrunjvm.toml')
 
-def build(context):
-    build_config = context.config['build']
-    clear_cmds = build_config.get('clear_cmds', None)
-    if clear_cmds:
-        execute_cmds(context, clear_cmds)
+def build(context, app):
+    build_config = context.config.get('build', None)
+    if build_config:
+        clear_cmds = build_config.get('clear_cmds', None)
+        if clear_cmds:
+            context.execute_cmds(clear_cmds)
 
-    build_cmds = build_config.get('build_cmds')
-    execute_cmds(context, build_cmds)
+        build_cmds = build_config.get('build_cmds', None)
+        if build_cmds:
+            context.execute_cmds(build_cmds)
 
-def execute_cmds(context, cmds):
-    for cmd in cmds:
-        cmd = context.resolve_config_value(cmd)
-        logging.debug('execute cmd %s', cmd)
-        subprocess.check_call(cmd, shell=True)
+    projects_config = context.config.get('projects')
+
+    for pro_config in projects_config:
+        app.build_project(pro_config)
 
 def handle_projects(context, app):
     projects_config = context.config.get('projects')
@@ -44,19 +44,16 @@ def handle_projects(context, app):
 @click.option('--version', 'print_version', is_flag=True)
 def main(config_file, no_config, no_build, no_run, print_version):
 
-    rootLogger = logging.getLogger()
-    rootLogger.setLevel(logging.DEBUG)
-
     platform = sys.platform
 
-    logging.info('platform : %s', platform)
-    logging.info('work dir : %s', CURRENT_WORK_DIR)
-    logging.info(f'no config: {no_config}')
-    logging.info(f'no build: {no_build}')
-    logging.info(f'no run: {no_run}')
+    print(f'platform : {platform}')
+    print(f'work dir : {CURRENT_WORK_DIR}')
+    print(f'no config: {no_config}')
+    print(f'no build: {no_build}')
+    print(f'no run: {no_run}')
 
     if print_version:
-        logging.info('version: %s', pyrunjvm.__version__)
+        print('version: %s', pyrunjvm.__version__)
         return
 
     env_file = os.path.join(CURRENT_WORK_DIR, '.env.toml')
@@ -77,7 +74,7 @@ def main(config_file, no_config, no_build, no_run, print_version):
         return
 
     if not no_build:
-        build(context)
+        build(context, app)
 
     handle_projects(context, app)
 

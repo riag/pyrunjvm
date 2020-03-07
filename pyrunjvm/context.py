@@ -140,6 +140,12 @@ class Context(object):
         s = t.render(m)
         with io.open(p, 'w', encoding='UTF-8') as f:
             f.write(s)
+    
+    def execute_cmds(self, cmds):
+        for cmd in cmds:
+            cmd = self.resolve_config_value(cmd)
+            print('execute cmd ', cmd)
+            subprocess.check_call(cmd, shell=True)
 
 
 

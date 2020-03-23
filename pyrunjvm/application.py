@@ -6,6 +6,7 @@ import pybee
 from .util import random_port
 import asyncio
 import subprocess
+import sys
 
 class DebugPortInfo(object):
     def __init__(self, name, port):
@@ -332,6 +333,9 @@ class FlatJarApplication(AbastApplication):
             return
 
         ct_list = []
+        if sys.platform == 'win32':
+            asyncio.set_event_loop(asyncio.ProactorEventLoop())
+
         loop = asyncio.get_event_loop()
         for config in self.flatjar_config_list:
             ct = self.run_flatjar(config)

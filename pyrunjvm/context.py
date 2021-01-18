@@ -73,16 +73,18 @@ class Context(object):
         self.java_bin = java_bin
         self.debug_port_info_list = []
 
-    def get_env(self, name, default=None):
+    def get_env(self, name, default=None, convert_func=None):
         value = self.environ.get(name, None)
         if value is None:
-            value = default
+            return default
 
-        if not is_str(value):
-            return value
+        if is_str(value):
+            value = self.resolve_str_value(value, self.environ)
 
-        return self.resolve_str_value(value, self.environ)
+        if convert_func is not None:
+            value = convert_func(value)
 
+        return value
 
     def resolve_config_value(self, value):
         if not is_str(value):

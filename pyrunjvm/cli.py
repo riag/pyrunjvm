@@ -7,7 +7,7 @@ from .context import create_context
 from .application import create_application
 import pyrunjvm
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 
 CURRENT_WORK_DIR = os.path.abspath(os.getcwd())
@@ -60,7 +60,10 @@ def main(config_file, env_file, no_config, no_build, no_run, print_version):
         print('version: %s', pyrunjvm.__version__)
         return
 
-    env = load_dotenv(env_file)
+    if not os.path.isfile(env_file):
+        print('env file [%s] is not exist' % env_file)
+    else:
+        env = dotenv_values(env_file)
 
     context = create_context(
         platform, CURRENT_WORK_DIR, config_file, env

@@ -72,7 +72,7 @@ class TomcatApplication(AbastApplication):
 
         self.src_tomcat_home_dir = None
 
-        self.debug_port = self.context.get_env('JVM_DEBUG_PORT', 50899)
+        self.debug_port = self.context.get_env('JVM_DEBUG_PORT', 50899, int)
         self.jvm_arg_list = []
         if context.jvm_arg_list:
             self.jvm_arg_list.extend(context.jvm_arg_list)
@@ -88,10 +88,10 @@ class TomcatApplication(AbastApplication):
         self.tomcat_config = self.context.config.get('tomcat')
         self.tomcat_proxy = TomcatProxy(self.context, self.tomcat_config.get('proxy'))
 
-        self.port = self.context.get_env('TOMCAT_PORT', 8080)
-        self.shutdowm_port = self.context.get_env('TOMCAT_SHUTDOWN_PORT', -1)
-        self.ajp_port = self.context.get_env('TOMAT_AJP_PORT', -1)
-        self.redirect_port = self.context.get_env('TOMCAT_REDIRECT_PORT', -1)
+        self.port = self.context.get_env('TOMCAT_PORT', 8080, int)
+        self.shutdowm_port = self.context.get_env('TOMCAT_SHUTDOWN_PORT', -1, int)
+        self.ajp_port = self.context.get_env('TOMAT_AJP_PORT', -1, int)
+        self.redirect_port = self.context.get_env('TOMCAT_REDIRECT_PORT', -1, int)
 
         self.src_tomcat_home_dir = self.context.get_env('TOMCAT_HOME')
         if not self.src_tomcat_home_dir:

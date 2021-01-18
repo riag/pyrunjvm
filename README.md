@@ -16,7 +16,7 @@
 ### 配置文件
   配置文件 `.pyrunjvm.toml` 定义了如何运行服务以及默认环境变量,
   因为每个用户的工具路径或者端口都不一样的，pyrunjvm 是通过定义环境变量来更改这些配置
-  可在系统的环境变量里定义，或者在当前目录下建立配置文件 `.env.toml` 来定义具体的环境变量
+  可在系统的环境变量里定义，或者在当前目录下建立配置文件 `.env` 来定义具体的环境变量
 
   在项目的根目录下新建文件 `.pyrunjvm.toml`, 下面是一个配置文件的例子
   ```
@@ -45,19 +45,13 @@ JAVA_BIN = "java"
 
   ```
 
-  环境变量配置文件 `.env.toml` 例子
+  环境变量配置文件 `.env` 例子
 
   ```
- [env]
 JVM_DEBUG_PORT = 50859
 TOMCAT_PORT = 8080
 GRADLE_BIN = "gradle"
 
-[platform.linux.env]
-TOMCAT_HOME = "/mnt/g/devel/apache-tomcat-8.5.16"
-
-
-[platform.win32.env]
 GRADLE_BIN = "G:\\devel\\gradle-5.1.1\\bin\\gradle.bat"
 JAVA_BIN="C:\\Users\\riag\\.jabba\\jdk\\zulu@1.8\\bin\\java.exe"
 TOMCAT_HOME="G:\\devel\\apache-tomcat-8.5.16"

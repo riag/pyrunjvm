@@ -60,11 +60,13 @@ def main(config_file, env_file, no_config, no_build, no_run, print_version):
         print('version: %s', pyrunjvm.__version__)
         return
 
+    env = None
     if not os.path.isfile(env_file):
         print('env file [%s] is not exist' % env_file)
     else:
         env = dotenv_values(env_file)
 
+    print(f'env: {env}')
     context = create_context(
         platform, CURRENT_WORK_DIR, config_file, env
         )

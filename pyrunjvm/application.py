@@ -208,6 +208,8 @@ class TomcatApplication(AbastApplication):
         jvm_cmd_list = [self.context.java_bin,]
         jvm_cmd_list.extend(self.jvm_arg_list)
 
+        kwargs['env'] = self.context.environ
+
         cmd = ' '.join(jvm_cmd_list)
         if kwargs.get('shell', None) is None:
             kwargs['shell'] = True
@@ -322,7 +324,8 @@ class FlatJarApplication(AbastApplication):
                 cmd, 
                 stdout=log_file,
                 stderr=log_file,
-                cwd = cwd
+                cwd = cwd,
+                env = self.context.environ
             )
             await proc.wait()
             print(f"{config.name} is stop")

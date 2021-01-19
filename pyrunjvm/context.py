@@ -147,7 +147,7 @@ class Context(object):
         for cmd in cmds:
             cmd = self.resolve_config_value(cmd)
             print('execute cmd ', cmd)
-            subprocess.check_call(cmd, shell=True)
+            subprocess.check_call(cmd, shell=True, env=self.environ)
 
 
 

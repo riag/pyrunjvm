@@ -57,7 +57,7 @@ def main(config_file, env_file, no_config, no_build, no_run, print_version):
     print(f'no run: {no_run}')
 
     if print_version:
-        print('version: %s', pyrunjvm.__version__)
+        print('version: %s' % pyrunjvm.__version__)
         return
 
     env = None

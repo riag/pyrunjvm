@@ -2,8 +2,8 @@
 import os
 import pkg_resources
 
-import pybee
-from .util import random_port
+from .util import random_port, mkdir,rmtree,write_file_with_encoding,render_by_jinja_template
+import shutil
 import asyncio
 import subprocess
 import sys
@@ -104,14 +104,14 @@ class TomcatApplication(AbastApplication):
         if self.context.no_config:
             return
 
-        pybee.path.mkdir(self.tomcat_context_dir, True)
-        pybee.path.mkdir(self.temp_dir)
-        pybee.path.mkdir(self.work_dir)
-        pybee.path.mkdir(self.logs_dir)
+        mkdir(self.tomcat_context_dir, True)
+        mkdir(self.temp_dir)
+        mkdir(self.work_dir)
+        mkdir(self.logs_dir)
 
-        pybee.path.rmtree(self.conf_dir)
+        rmtree(self.conf_dir)
 
-        pybee.path.copytree(
+        shutil.copytree(
             os.path.join(self.src_tomcat_home_dir, 'conf'),
             self.conf_dir
         )
@@ -152,7 +152,7 @@ class TomcatApplication(AbastApplication):
         p = context_path[1:]
         p = p.replace('/', '#')
         out_file = os.path.join(self.tomcat_context_dir, '%s.xml' % p)
-        pybee.path.write_file_with_encoding(out_file, s)
+        write_file_with_encoding(out_file, s)
 
 
     def post_handle(self):
@@ -166,7 +166,7 @@ class TomcatApplication(AbastApplication):
                 'AJP_PORT': self.ajp_port,
                 'Proxy': self.tomcat_proxy
             }
-            pybee.sed.render_by_jinja_template(
+            render_by_jinja_template(
                 tpl,
                 os.path.join(self.conf_dir, 'server.xml'),
                 'utf-8', m
@@ -264,7 +264,7 @@ class FlatJarApplication(AbastApplication):
         if self.context.no_config:
             return
 
-        pybee.path.mkdir(self.logs_dir)
+        mkdir(self.logs_dir)
 
     def handle_project(self, project_config):
 
@@ -275,6 +275,8 @@ class FlatJarApplication(AbastApplication):
         jvm_arg_list = project_config.get('jvm_opts')
         debug_port = project_config.get('debug_port')
         debug_port = self.context.resolve_config_value(debug_port)
+
+        print(f"debug port: is ${debug_port}")
 
         if debug_port and type(debug_port) is str:
             debug_port = int(debug_port)
@@ -307,6 +309,12 @@ class FlatJarApplication(AbastApplication):
             if config.jvm_arg_list:
                 jvm_args.extend(config.jvm_arg_list)
 
+            if config.debug_port and config.debug_port > 0:
+                jvm_args.append('-Xdebug') 
+                jvm_args.append(
+                    '-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=127.0.0.1:%d' % config.debug_port
+                )
+
             cmd_list = [self.context.java_bin, ]
             if jvm_args:
                 cmd_list.extend(jvm_args)
@@ -315,11 +323,14 @@ class FlatJarApplication(AbastApplication):
             cmd_list.append(config.jar_path)
 
             cmd = ' '.join(cmd_list)
+
+            cwd = os.path.join(self.context.work_dir, config.project_path)
+
+            print(f'cwd is {cwd}')
             print(f'execute cmd: {cmd}')
             print('')
             print(f'log file is {p}')
 
-            cwd = os.path.join(self.context.work_dir, config.project_path)
             proc = await asyncio.create_subprocess_shell(
                 cmd, 
                 stdout=log_file,

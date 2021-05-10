@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyrunjvm"
-version = "0.4.0"
+version = "0.5.0"
 description = ""
 authors = ["riag <riag@163.com>"]
 license = "Apache-2.0"
@@ -13,10 +13,11 @@ pyrunjvm = 'pyrunjvm:cli.main'
 [tool.poetry.dependencies]
 python = "^3.6"
 tomlkit = "^0.5.3"
-pybee = "^0.3.2"
 #multitail = "^1.3"
 
 python-dotenv = "^0.15.0"
+click = "^7.1.2"
+Jinja2 = "^2.11.3"
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
 

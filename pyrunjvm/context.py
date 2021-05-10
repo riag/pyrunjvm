@@ -5,12 +5,10 @@ import sys
 import logging
 import subprocess
 
-import pybee
-
 import tomlkit
 from tomlkit.toml_file import TOMLFile
 
-from .util import is_str
+from .util import is_str, mkdir
 import jinja2
 import io
 
@@ -39,8 +37,8 @@ class Context(object):
 
         self.project_list = []
 
-        pybee.path.mkdir(self.dest_dir, True)
-        pybee.path.mkdir(self.logs_dir, True)
+        mkdir(self.dest_dir, True)
+        mkdir(self.logs_dir, True)
 
         self.config = config
         self.environ = {}

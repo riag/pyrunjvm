@@ -11,7 +11,13 @@
 ## 使用
 
 ### 安装
- `TODO`
+
+ * 要求安装 python 3.8 或以上版本
+ * 使用 pip 安装
+
+   ```
+   pip3 install pyrunjvm
+   ```
 
 ### 配置文件
   配置文件 `.pyrunjvm.toml` 定义了如何运行服务以及默认环境变量,
@@ -28,18 +34,27 @@ build_cmds = [
     "${GRADLE_BIN} explodedWar",
 ]
 
+[tomcat]
+proxy.enable = true
+
+
 [[projects]]
+path="test-mgr"
 context_path = "test-mgr"
 exploded_war_path = "${WORK_DIR}/test-mgr/build/exploded"
 
 [[projects]]
+path="test-api"
 context_path = "test-api"
 exploded_war_path = "${WORK_DIR}/test-api/build/exploded"
 
 # default env
 [env]
-JVM_DEBUG_PORT = 50899
-TOMCAT_PORT = 8080
+JVM_DEBUG_PORT = "50899"
+TOMCAT_PORT = "8080"
+SHUTDOWN_PORT =  "8005"
+REDIRECT_PORT = "8443"
+AJP_PORT = "8009"
 GRADLE_BIN = "gradle"
 JAVA_BIN = "java"
 
@@ -50,11 +65,11 @@ JAVA_BIN = "java"
   ```
 JVM_DEBUG_PORT = 50859
 TOMCAT_PORT = 8080
-GRADLE_BIN = "gradle"
 
-GRADLE_BIN = "G:\\devel\\gradle-5.1.1\\bin\\gradle.bat"
-JAVA_BIN="C:\\Users\\riag\\.jabba\\jdk\\zulu@1.8\\bin\\java.exe"
+GRADLE_BIN = ".\gradlew.bat"
 TOMCAT_HOME="G:\\devel\\apache-tomcat-8.5.16"
+
+JAVA_BIN="C:\\Users\\riag\\.jabba\\jdk\\zulu@1.8\\bin\\java.exe"
  
   ```
 

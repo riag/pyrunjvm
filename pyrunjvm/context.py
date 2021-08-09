@@ -27,6 +27,10 @@ class Project(object):
 
 class Context(object):
     def __init__(self, platform, work_dir, config, env=None):
+        self.enable_psutil = False
+
+        self.verbose = False
+
         self.platform = platform
         self.work_dir = work_dir 
         self.dest_dir = os.path.join(work_dir, '.pyrunjvm')
@@ -140,10 +144,26 @@ class Context(object):
         s = t.render(m)
         with io.open(p, 'w', encoding='UTF-8') as f:
             f.write(s)
+
+    def resolve_cmd(self, cmd):
+
+        if cmd is (list, tuple):
+            new_cmd = []
+            for c in cmd:
+                new_cmd.append(self.resolve_config_value(c))
+            return new_cmd
+
+        return self.resolve_config_value(cmd)
+        
+
+    def execute_cmd(self, cmd):
+        cmd = self.resolve_cmd(cmd)
+        print('execute cmd ', cmd)
+        subprocess.check_call(cmd, shell=True, env=self.environ)
     
     def execute_cmds(self, cmds):
         for cmd in cmds:
-            cmd = self.resolve_config_value(cmd)
+            cmd = self.resolve_cmd(cmd)
             print('execute cmd ', cmd)
             subprocess.check_call(cmd, shell=True, env=self.environ)
 

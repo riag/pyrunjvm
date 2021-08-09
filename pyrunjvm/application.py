@@ -113,19 +113,31 @@ class TomcatApplication(AbastApplication):
 
         shutil.copytree(
             os.path.join(self.src_tomcat_home_dir, 'conf'),
-            self.conf_dir
+            self.conf_dir, dirs_exist_ok=True
         )
 
         use_port_list = [self.debug_port , self.port,]
-        if self.shutdowm_port < 1:
+        if self.shutdowm_port < 1 :
+            if not self.context.enable_psutil:
+                print("psutil is not enable, please use fixed port for tomcat shutdown port")
+                sys.exit(-1)
+
             self.shutdowm_port = random_port(use_port_list)
             use_port_list.append(self.shutdowm_port)
 
         if self.ajp_port < 1:
+            if not self.context.enable_psutil:
+                print("psutil is not enable, please use fixed port for tomcat ajp port")
+                sys.exit(-1)
+
             self.ajp_port = random_port(use_port_list)
             use_port_list.append(self.ajp_port)
 
         if self.redirect_port < 1:
+            if not self.context.enable_psutil:
+                print("psutil is not enable, please use fixed port for tomcat redirect port")
+                sys.exit(-1)
+
             self.redirect_port = random_port(use_port_list)
             use_port_list.append(self.redirect_port)
 
@@ -172,20 +184,20 @@ class TomcatApplication(AbastApplication):
                 'utf-8', m
             )
 
-        self.jvm_arg_list.append('-D"java.awt.headless"=true')
+        self.jvm_arg_list.append('-Djava.awt.headless=true')
         self.jvm_arg_list.append(
-            "-D\"java.util.logging.config.file\"=\"%s\"" % os.path.join(self.conf_dir, 'logging.properties')
+            "-Djava.util.logging.config.file=%s" % os.path.join(self.conf_dir, 'logging.properties')
             )
-        self.jvm_arg_list.append("-D\"java.util.logging.manager\"=org.apache.juli.ClassLoaderLogManager")
+        self.jvm_arg_list.append("-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager")
 
         #self.jvm_arg_list.append("-D\"com.sun.management.jmxremote\"= ")
         #self.jvm_arg_list.append("-D\"com.sun.management.jmxremote.port\"=%d" % tomact_jmx_port)
         #self.jvm_arg_list.append("-D\"com.sun.management.jmxremote.ssl\"=false")
         #self.jvm_arg_list.append("-D\"com.sun.management.jmxremote.authenticate\"=false")
 
-        self.jvm_arg_list.append("-D\"java.rmi.server.hostname\"=127.0.0.1")
-        self.jvm_arg_list.append("-D\"jdk.tls.ephemeralDHKeySize\"=2048")
-        self.jvm_arg_list.append("-D\"java.protocol.handler.pkgs\"=\"org.apache.catalina.webresources\"")
+        self.jvm_arg_list.append("-Djava.rmi.server.hostname=127.0.0.1")
+        self.jvm_arg_list.append("-Djdk.tls.ephemeralDHKeySize=2048")
+        self.jvm_arg_list.append("-Djava.protocol.handler.pkgs=org.apache.catalina.webresources")
 
         class_path_list = []
         class_path_list.append(
@@ -195,11 +207,21 @@ class TomcatApplication(AbastApplication):
             os.path.join(self.src_tomcat_home_dir, "bin", "tomcat-juli.jar")
             )
         self.jvm_arg_list.append('-classpath')
-        self.jvm_arg_list.append('"%s"' % os.pathsep.join(class_path_list))
+        self.jvm_arg_list.append('%s' % os.pathsep.join(class_path_list))
 
-        self.jvm_arg_list.append("-D\"catalina.base\"=\"%s\"" % self.tomcat_dir)
-        self.jvm_arg_list.append("-D\"catalina.home\"=\"%s\"" % self.src_tomcat_home_dir)
-        self.jvm_arg_list.append("-D\"java.io.tmpdir\"=\"%s\"" % self.temp_dir)
+        # self.jvm_arg_list.append('-classpath')
+        # self.jvm_arg_list.append(
+        #      os.path.join(self.src_tomcat_home_dir, "bin", "bootstrap.jar")
+        # )
+
+        # self.jvm_arg_list.append('-classpath')
+        # self.jvm_arg_list.append(
+        #      os.path.join(self.src_tomcat_home_dir, "bin", "tomcat-juli.jar")
+        # )
+
+        self.jvm_arg_list.append("-Dcatalina.base=%s" % self.tomcat_dir)
+        self.jvm_arg_list.append("-Dcatalina.home=%s" % self.src_tomcat_home_dir)
+        self.jvm_arg_list.append("-Djava.io.tmpdir=%s" % self.temp_dir)
         self.jvm_arg_list.append("org.apache.catalina.startup.Bootstrap")
         self.jvm_arg_list.append("start")
 
@@ -226,7 +248,7 @@ class TomcatApplication(AbastApplication):
         with open(log_file, 'w') as f:
             kwargs['stdout'] = f
             kwargs['stderr'] = f
-            subprocess.check_call(cmd, **kwargs)
+            subprocess.check_call(jvm_cmd_list, **kwargs)
 
         print('')
         print('stop')
